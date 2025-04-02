@@ -1,0 +1,142 @@
+<div class="c-variant-dropdown-menu">
+  <button class="c-variant-dropdown-menu--button" onclick="toggleDropdown('{{ c-product.id }}', '{{ location }}')" id="dropdown-button-{{ c-product.id }}-{{ location }}">
+    <p>{{ c-product.selected_or_first_available_variant.title }}</p>
+    {% render 'icon-caret-down' %}
+  </button>
+  {% assign variants = c-product.variants %}
+  <div class="c-variant-dropdown-menu--container" id="dropdown-menu-{{ c-product.id }}-{{ location }}">
+    {% for variant in variants %}
+      {% if variant.available %}
+        <button 
+          class="c-variant-dropdown-menu--variant {% if variant.id == c-product.selectedVariant.id %}selected{% endif %}"
+          id="dropdown-options-{{ c-product.id }}-{{ location }}"
+          onclick="updateProductGrid(
+            '{{ c-product.id }}',
+            '{{ variant.id }}',
+            '{{ variant.featured_image | img_url: 'master' }}',
+            '{{ variant.title | escape }}',
+            '{{ variant.price | money | strip_html }}',
+            '{{ variant.available | json }}',
+            '{{ c-product.title }}',
+            '{{ location }}'
+        )">
+          <p>{{ variant.title }}</p>
+        </button>
+      {% endif %}
+    {% endfor %}
+  </div>
+</div>
+
+<style>
+  .c-variant-dropdown-menu {
+    width: 100%;
+    height: fit-content;
+    position: relative;
+  }
+  .c-variant-dropdown-menu p {
+    margin: 0;
+    font-size: 14px;
+  }
+  .c-variant-dropdown-menu--button {
+    width: 100%;
+    background: white;
+    border: 1px solid black;
+    font-family: futura;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+    cursor: pointer;
+  }
+  .c-variant-dropdown-menu--button.active svg {
+    transform: rotate(180deg);
+  }
+  .c-variant-dropdown-menu--container {
+    display: none;
+    border: 1px solid black;
+    position: absolute;
+    background: white;
+    z-index: 10000;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    max-height: 250px;
+    overflow-y: scroll;
+    margin-top: 5px;
+  }
+  .c-variant-dropdown-menu--variant {
+    font-family: futura;
+    text-align: left;
+    padding: 10px;
+    background: none;
+    border: none;
+    width: 100%;
+    cursor: pointer;
+  }
+  .c-variant-dropdown-menu--variant.selected {
+    background: #f6f6f6;
+  }
+  .c-variant-dropdown-menu--variant:hover {
+    background-color: #f6f6f6;
+  }
+</style>
+
+<script>
+
+  function toggleDropdown(cpID, location) {
+      const dropdownMenu = document.getElementById(`dropdown-menu-${cpID}-${location}`);
+      const dropdownButton = document.getElementById(`dropdown-button-${cpID}-${location}`);
+  
+      if (dropdownMenu.style.display === "block") {
+          dropdownMenu.style.display = "none";
+          dropdownButton.classList.remove("active");
+      } else {
+          dropdownMenu.style.display = "block";
+          dropdownButton.classList.add("active");
+      }
+  }
+  
+  function updateProductGrid(productId, variantId, variantImg, variantTitle, variantPrice, variantAvailability, productTitle, location) {
+      const hiddenInput = document.querySelector(`.product-variant-id-${productId}-${location}`);
+      const variantImage = document.querySelector(`#variant-image-${productId }-${location}`);
+      const priceContainer = document.querySelector(`#variant-price-${productId}-${location}`);
+      const dropdownButton = document.querySelector(`#dropdown-button-${productId}-${location}`);
+      const dropdownOptions = document.querySelectorAll(`#dropdown-options-${productId}-${location}`);
+  
+      // Update hidden input field
+      if (hiddenInput) {
+        hiddenInput.value = variantId;
+      }
+      
+      // Update image in the related product grid
+      if (variantImage) {
+        variantImage.src = variantImg;
+      }
+  
+      // Update price display
+      if (priceContainer) {
+        priceContainer.innerText = `${variantPrice}`;
+      }
+  
+      // Update product title variant
+      if (dropdownButton) {
+        dropdownButton.innerHTML = `<p>${variantTitle}</p>`+`{% render 'icon-caret-down' %}`;
+      }
+
+      // Update highlighted variant
+      if (dropdownOptions) {
+        dropdownOptions.forEach((option) => {
+          // initially remove 'selected' class
+          option.classList.remove("selected");
+          
+          const text = option.querySelector("p")?.innerText || ""; 
+          if (text === variantTitle) {
+            option.classList.add("selected");
+          }
+        });
+      }
+  
+      toggleDropdown(productId, location);
+  }
+  
+</script>
