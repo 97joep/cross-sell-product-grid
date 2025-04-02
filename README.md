@@ -2,4 +2,4 @@ Creates a product grid, displaying a product's complimenting product, set throug
 
 Allows for changes in variant (and complimenting changes in grid content) & add to cart functionality.
 
-Suitable for a Shopify product page and/or a Shopify cart drawer.
+Suitable for a Shopify product page and/or a Shopify cart drawer. Designed to improve a store's Average Order Value.
