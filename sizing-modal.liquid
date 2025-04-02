@@ -1,0 +1,215 @@
+{% assign product-data = modal-product.metafields.custom.sizing.value %}
+{% for si-product in product-data.sizingContent %}
+  {% if si-product.product == modal-product.title %}
+    <header class="custom-modal-header">
+      <span id="closeModalButton" class="custom-close" onclick="closeModal('sizing', '{{ modal-product.id }}')">&times;</span>
+      <h3>{{ si-product.product }}</h3>
+    </header>
+    {% if si-product.subProducts %}
+      <div class="sizing-modal-options">
+        {% for subProduct in si-product.subProducts %}
+          <button id="sub-product-button-{{ subProduct }}" onclick="selectSubProduct('{{ subProduct }}')" data-index="{{ forloop.index }}">
+            <h4>{{ subProduct }}</h4>
+          </button>
+        {% endfor %}
+      </div>
+      <!-- create subproduct modal -->
+      {% for subProduct in si-product.subProducts %}
+        {% for match in product-data.sizingContent %}
+          {% if match.product == subProduct %}
+            <div class="sizing-modal-content sub-product" id="sub-product-{{ subProduct }}" data-index="{{ forloop.index }}">
+              {% assign details = match.sizingDetails %}
+              <div class="sizing-table-container">
+                <table>
+                  <thead>
+                    <tr>
+                      {% for heading in details.headings %}
+                        <th id="heading-{{ forloop.index }}-{{ si-product.product | remove: " " }}-{{ subProduct }}"><h4>{{ heading }}</h4></th>
+                      {% endfor %}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for size in details.sizes %}
+                      <tr class="table-option-row">
+                        {% for heading in details.headings %}
+                          <td id="column-{{ forloop.index }}-{{ si-product.product | remove: " " }}-{{ subProduct }}" onmouseover="toggleHover('{{ forloop.index }}', 'hover', '{{ si-product.product | remove: " " }}', '{{ subProduct }}')" onmouseout="toggleHover('{{ forloop.index }}', 'out', '{{ si-product.product | remove: " " }}', '{{ subProduct }}')"><p>{{ size[heading] }}</p></td>
+                        {% endfor %}
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+              {% if match.instructions != nil %}
+                <div class="sizing-instructions">
+                  <h4>Sizing Tips</h4>
+                  {% for instruction in match.instructions %}
+                    <p>{{ instruction }}</p>
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endif %}
+        {% endfor %}
+      {% endfor %}
+    {% else %}
+      <div class="sizing-modal-content">
+        {% assign details = si-product.sizingDetails %}
+        <div class="sizing-table-container">
+          <table>
+            <thead>
+              <tr>
+                {% for heading in details.headings %}
+                  <th id="heading-{{ forloop.index }}-{{ si-product.product | remove: " " }}-{{ si-product.product | remove: " " }}"><h4>{{ heading }}</h4></th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for size in details.sizes %}
+                <tr class="table-option-row">
+                  {% for heading in details.headings %}
+                    <td id="column-{{ forloop.index }}-{{ si-product.product | remove: " " }}-{{ si-product.product | remove: " " }}" onmouseover="toggleHover('{{ forloop.index }}', 'hover', '{{ si-product.product | remove: " " }}', '{{ si-product.product | remove: " " }}')" onmouseout="toggleHover('{{ forloop.index }}', 'out', '{{ si-product.product | remove: " " }}', '{{ si-product.product | remove: " " }}')"><p>{{ size[heading] }}</p></td>
+                  {% endfor %}
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% if si-product.instructions != nil %}
+          <div class="sizing-instructions">
+            <h4>Sizing Tips</h4>
+            {% for instruction in si-product.instructions %}
+              <p>{{ instruction }}</p>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+    {% endif %}
+  {% endif %}
+{% endfor %}
+    
+<style>
+  .custom-modal
+  .sizing-modal-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 30px;
+    width: 100%;
+  }
+  .sizing-modal-content.sub-product {
+    display: none;
+  }
+  .sizing-modal-content.sub-product.activeProduct {
+    display: flex;
+  }
+  .sizing-table-container {
+    width: 100%;
+  }
+  .sizing-table-container table {
+    width: 100%;
+    text-align: center;
+  }
+  th {
+    padding: 1.5rem !important;
+    background: #f1b490;
+  }
+  td {
+    padding: 0 1.5rem !important;
+  }
+  .sizing-instructions {
+    padding: 2.5rem 0 0;
+  }
+  .sizing-instructions p {
+    margin: 10px;
+  }
+  .table-option-row:hover {
+    background: #ede3dd;
+  }
+  .sizing-modal-options {
+    width: 100%;
+    display: flex;
+    align-items: center;
+  }
+  .sizing-modal-options button {
+    padding: 1.5rem;
+    font-family: futura;
+    background: none;
+    border: none;
+    width: 50%;
+    text-align: center;
+    cursor: pointer;
+  }
+  .sizing-modal-options button:hover {
+    background: #f9f9f9;
+  }
+  .activeButton {
+    border-bottom: 2px solid #f1b490 !important;
+  }
+</style>
+
+<script>
+  
+  function toggleHover(index, event, product, subProduct) {
+    const columnItems = document.querySelectorAll(`#column-${index}-${product}-${subProduct}`);
+    const columnHeader = document.querySelector(`#heading-${index}-${product}-${subProduct}`);
+
+    if (event === "hover") {
+      if (columnItems) {
+        columnItems.forEach((item) => {
+          item.style.background = "#ede3dd";
+        });
+      }
+  
+      if (columnHeader) {
+        columnHeader.style.background = "#ede3dd";
+      }
+    } else {
+      if (columnItems) {
+        columnItems.forEach((item) => {
+          item.style.background = "none";
+        });
+      }
+  
+      if (columnHeader) {
+        columnHeader.style.background = "#f1b490";
+      }
+    }
+  }
+
+  function selectSubProduct(subProduct) {
+    const allSubProducts = document.querySelectorAll(`.sub-product`);
+    const selectedSubProduct = document.querySelector(`#sub-product-${subProduct}`);
+    const allSubProductButtons = document.querySelectorAll(`.sizing-modal-options button`);
+    const selectedSubProductButton = document.querySelector(`#sub-product-button-${subProduct}`);
+
+    console.log(subProduct);
+
+    if (allSubProducts) {
+      allSubProducts.forEach((sub) => {
+        sub.classList.remove("activeProduct");
+      });
+      allSubProductButtons.forEach((button) => {
+        button.classList.remove("activeButton");
+      });
+      
+      selectedSubProduct.classList.add("activeProduct");
+      selectedSubProductButton.classList.add("activeButton");
+    }
+  }
+
+  function initialiseModal() {
+    const firstSubProductButton = document.querySelector(`.sizing-modal-options button[data-index="1"]`);
+    const firstSubProduct = document.querySelector(`.sizing-modal-content[data-index="1"]`);
+
+    if (firstSubProduct) {
+      firstSubProduct.classList.add("activeProduct");
+      firstSubProductButton.classList.add("activeButton");
+    }
+
+    console.log("Modal initialised");
+  }
+
+  window.addEventListener("load", initialiseModal());
+  
+</script>
