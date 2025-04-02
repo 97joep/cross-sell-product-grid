@@ -1,0 +1,207 @@
+{% if location == 'productPage' %}
+  {% render 'sizing-modal', modal-product: cp %}
+{% endif %}
+
+<div class="pp-cross-sell-grid" data-id="{{ cp.id }}" data-location="{{ location }}" onload="gridHeight()">
+  <a href="{{ cp.url }}" class="cs-product-image" id="cs-product-image-{{ cp.id }}-{{ location }}">
+    <img src="{{ selectedVariant.featured_image | img_url: 'master' }}" id="variant-image-{{ cp.id }}-{{ location }}">
+  </a>
+  
+  <div class="cs-product-title" id="cs-product-title-{{ cp.id }}-{{ location }}">
+    <a href="{{ cp.url }}"><h4>{{ cp.title }}</h4></a>
+    <!-- if product is in faqs & has modal link -->
+    {% assign sizing_data = product.metafields.custom.sizing.value %}
+    {% for data_check in sizing_data.sizingContent %}
+      {% if cp.title == data_check.product and location != 'cartDrawer' %}
+        <a class="product-faq-link" href="#modal-sizing" onclick="openModal('sizing', '{{ cp.id }}')">
+          <p>Sizing Info</p>
+        </a>
+      {% endif %}
+    {% endfor %}
+  </div>
+  
+  <div class="cs-product-variants" id="cs-product-variants-{{ cp.id }}-{{ location }}">
+    {% render 'dropdown-menu', c-product: cp, location: location %}
+  </div>
+  
+  <div class="cs-atc-button" id="cs-atc-button-{{ cp.id }}-{{ location }}">
+    <product-form
+      class="product-form"
+      data-hide-errors="{{ gift_card_recipient_feature_active }}"
+      data-section-id="{{ section.id }}"
+      style="margin:0;"
+    >
+      <div class="upsellATCbuttonContainer">
+        {%- form 'product',
+            cp,
+            id: product_form_id,
+            class: 'form',
+            novalidate: 'novalidate',
+            data-type: 'add-to-cart-form'
+          -%}
+            <input
+              type="hidden"
+              name="id"
+              value="{{ selectedVariant.id }}"
+              {% if selectedVariant.available == false or quantity_rule_soldout %}
+                disabled
+              {% endif %}
+              class="product-variant-id-{{ cp.id }}-{{ location }}"
+            >
+            <div class="product-form__buttons">
+              {%- liquid
+                assign check_against_inventory = true
+                if cp.selected_or_first_available_variant.inventory_management != 'shopify' or cp.selected_or_first_available_variant.inventory_policy == 'continue'
+                  assign check_against_inventory = false
+                endif
+                if cp.selected_or_first_available_variant.quantity_rule.min > cp.selected_or_first_available_variant.inventory_quantity and check_against_inventory
+                  assign quantity_rule_soldout = true
+                endif
+              -%}
+              <button
+                id="ProductSubmitButton-ppUpsell-{{ cp.id }}-{{ location }}"
+                type="submit"
+                name="add"
+                class="product-form__submit button button--full-width {% if show_dynamic_checkout %}button--secondary{% else %}button--primary{% endif %}"
+                {% if cp.selected_or_first_available_variant.available == false or quantity_rule_soldout %}
+                  disabled
+                {% endif %}
+                style="margin-bottom:0;"
+              >
+                <span>
+                  {%- if cp.selected_or_first_available_variant.available == false or quantity_rule_soldout -%}
+                    {{ 'products.product.sold_out' | t }}
+                  {%- else -%}
+                    Add - <span id="variant-price-{{ cp.id }}-{{ location }}">{{ cp.selected_or_first_available_variant.price | money | strip_html }}</span>
+                  {%- endif -%}
+                </span>
+                {%- render 'loading-spinner' -%}
+              </button>
+            </div>
+          {%- endform -%}
+      </div>
+    </product-form>
+  </div>
+  
+</div>
+
+<style>
+  .pp-cross-sell-grid {
+    display: grid;
+    grid-template-areas:
+      "image title"
+      "image variants"
+      "image atc";
+    gap: 10px;
+    width: 100%;
+    grid-template-columns: auto 1fr;
+  }
+  .cs-product-image {
+    grid-area: image;
+    height: 132.297px;
+    width: auto;
+  }
+  .cs-product-image img {
+    width: auto;
+    height: 100%;
+    object-fit: contain;
+    border: 1px solid lightgray;
+  }
+  .cs-product-title {
+    grid-area: title;
+    height: fit-content;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .cs-product-title h4:hover {
+    text-decoration: underline;
+  }
+  .cs-product-variants {
+    grid-area: variants;
+    height: fit-content;
+  }
+  .cs-atc-button {
+    grid-area: atc;
+    height: fit-content
+  }
+  .cs-product-variants-dropdown-button {
+    width: 100%;
+  }
+  .cs-product-selected-option.active svg {
+    transform: rotate(180deg);
+  }
+  .cs-product-selected-option, .cs-product-single-option {
+    width: 100%;
+    background: white;
+    border: 1px solid black;
+    font-family: futura;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+    cursor: pointer;
+  }
+  .pp-cross-sell-grid p {
+    margin: 0;
+    font-size: 16px;
+    letter-spacing: 0;
+  }
+  .cs-product-variants-dropdown-menu {
+    display: none;
+    border: 1px solid black;
+    position: absolute;
+    background: white;
+    z-index: 100;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    max-height: 250px;
+    overflow-y: scroll;
+    margin-top: 5px;
+  }
+  .cs-product-variant {
+    font-family: futura;
+    text-align: left;
+    padding: 10px;
+    background: none;
+    border: none;
+    width: 100%;
+    cursor: pointer;
+  }
+  .cs-product-variant.selected {
+    background: #f6f6f6;
+  }
+  .cs-product-variant.variantOptions {
+    justify-content: start;
+    border: none;
+  }
+  .cs-product-variant:hover {
+    background-color: #f6f6f6;
+  }
+</style>
+
+<script>
+  function gridHeight() {
+    let gridContainer = document.querySelectorAll('.pp-cross-sell-grid');
+
+    gridContainer.forEach((grid) => {
+      let gridId = grid.getAttribute("data-id");
+      let gridLocation = grid.getAttribute("data-location");
+
+      let titleContainer = document.querySelector(`#cs-product-title-${gridId}-${gridLocation}`);
+      let variantContainer = document.querySelector(`#cs-product-variants-${gridId}-${gridLocation}`);
+      let atcContainer = document.querySelector(`#cs-atc-button-${gridId}-${gridLocation}`);
+      let imageContainer = document.querySelector(`#cs-product-image-${gridId}-${gridLocation}`);
+      
+      let newImageHeight = titleContainer.offsetHeight + variantContainer.offsetHeight + atcContainer.offsetHeight + 20;
+
+      if (imageContainer) {
+        imageContainer.style.height = `${newImageHeight}px`;
+      }
+    });
+  }
+
+  gridHeight();
+  window.addEventListener("resize", gridHeight);
+</script>
